@@ -97,6 +97,7 @@ if buttons_added:
 
 # Создаем клавиатуру для выбора действия с героем
 action_keyboard = types.InlineKeyboardMarkup(row_width=2)
+action_keyboard.row(types.InlineKeyboardButton("Аспект", callback_data="aspect"))
 action_keyboard.row(types.InlineKeyboardButton("Процент побед", callback_data="winrate"))
 action_keyboard.row(types.InlineKeyboardButton("Контрпики", callback_data="counters"))
 action_keyboard.row(types.InlineKeyboardButton("Лучшая сборка", callback_data="build"))
@@ -216,7 +217,7 @@ def handle_universal_hero_query(call):
     user_data[user_id]["action_msg_id"] = msg.message_id
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ["winrate", "counters", "build"])
+@bot.callback_query_handler(func=lambda call: call.data in ["winrate", "counters", "build", "aspect"])
 def handle_action_query(call):
     user_id = call.message.chat.id
     if user_id not in user_data:
@@ -227,6 +228,8 @@ def handle_action_query(call):
         text = percent_of_won(hero)
     elif call.data == "counters":
         text = counters(hero)
+    elif call.data == "aspect":
+        text = aspects(hero)
     elif call.data == "build":
         text = f"Лучшая сборка для героя {hero}."
 
