@@ -1,0 +1,72 @@
+from bs4 import BeautifulSoup as bs
+import requests
+
+headers = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+}
+
+# def all_heroes():
+#     url = "https://ru.dotabuff.com/heroes"
+#     req = requests.get(url, headers=headers)
+#     src = req.text
+#     # Разбор содержимого веб-страницы с помощью BeautifulSoup
+#     soup = bs(src, "lxml")
+#     # Найти контейнер с классом "hero-grid"
+#     all_hero_links = soup.find("div", class_="hero-grid").find_all("a")
+#     for hero in all_hero_links:
+#         href = hero.get("href")
+#         hero_name = hero.find("div", class_="name").text.strip()
+#         full_url = f"https://ru.dotabuff.com{href}"
+#         print(f"{hero_name} : {full_url}")
+
+def percent_of_won(hero):
+    url = f"https://ru.dotabuff.com/heroes/{hero}"
+    req = requests.get(url, headers=headers)
+    src = req.text
+    soup = bs(src, "lxml")
+    if hero.find("-") > 0:
+        parts = hero.split('-')
+        parts = [part.capitalize() for part in parts]
+        hero = " ".join(parts)
+    else:
+        hero.capitalize()
+
+    # Пробуем найти процент победы в контейнере с классом "won"
+    percent_of_won_element = soup.find("span", class_="won")
+
+
+    if percent_of_won_element:
+        percent_of_won = percent_of_won_element.text
+        return f"Процент побед героя {hero}: {percent_of_won}"
+    else:
+        # Если не найдено, попробуем найти в контейнере с классом "lost"
+        percent_of_lost_element = soup.find("span", class_="lost")
+        if percent_of_lost_element:
+            percent_of_lost = percent_of_lost_element.text
+            return f"Процент побед героя {hero}: {percent_of_lost}"
+
+def counters(hero):
+    url = f"https://ru.dotabuff.com/heroes/{hero}/counters?date=patch_7.34"
+    response = requests.get(url, headers=headers)
+    src = response.text
+    soup = bs(src, "lxml")
+    if hero == "anti-mage":
+        hero = "Anti-Mage"
+    elif hero.find("-") > 0:
+        parts = hero.split('-')
+        parts = [part.capitalize() for part in parts]
+        hero = " ".join(parts)
+    else:
+        hero = hero.capitalize()
+    header = soup.find("header", string=f"{hero} плох против")
+    table = header.find_next("table")
+    bad_heroes = []
+    rows = table.find_all("tr")
+    for row in rows[1:]:  # Пропускаем первую строку, так как это заголовок
+        columns = row.find_all("td")
+        hero_name = columns[1].text.strip()
+        bad_heroes.append(hero_name)
+    result = f"Герои, которые хорошо играют против {hero}:\n\n"
+    result += "\n".join(bad_heroes)
+    return result
