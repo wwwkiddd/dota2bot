@@ -1,0 +1,226 @@
+import telebot
+from telebot import types
+from heroes import *
+
+bot = telebot.TeleBot("6732033766:AAHzKdRHFgdgAv44gDmAMVxZG2cz7FJ94OU")
+
+category_keyboard = types.InlineKeyboardMarkup()
+category_keyboard.row(types.InlineKeyboardButton("Сила", callback_data="strength"), types.InlineKeyboardButton("Ловкость", callback_data="agility"))
+category_keyboard.row(types.InlineKeyboardButton("Интеллект", callback_data="intelligence"), types.InlineKeyboardButton("Универсальные", callback_data="universal"))
+
+# СОЗДАНИЕ КЛАВИАТУР ГЕРОЕВ
+strength_hero_keyboard = types.InlineKeyboardMarkup()
+strength_heroes = [
+    "Alchemist", "Bristleback", "Centaur Warrunner", "Chaos Knight",
+    "Dawnbreaker", "Doom", "Dragon Knight", "Earth Spirit", "Earthshaker",
+    "Elder Titan", "Huskar", "Kunkka", "Legion Commander", "Lifestealer",
+    "Mars", "Night Stalker", "Ogre Magi", "Omniknight", "Primal Beast",
+    "Pudge", "Slardar", "Spirit Breaker", "Sven", "Tidehunter",
+    "Tiny", "Treant Protector", "Tusk", "Underlord", "Undying", "Wraith King"
+]
+buttons_in_row = 2
+buttons_added = []
+for hero in strength_heroes:
+    callback_data = hero.replace(" ", "-").lower()
+    hero_button = types.InlineKeyboardButton(hero, callback_data=callback_data)
+    buttons_added.append(hero_button)
+    if len(buttons_added) == buttons_in_row:
+        strength_hero_keyboard.row(*buttons_added)
+        buttons_added = []
+if buttons_added:
+    strength_hero_keyboard.row(*buttons_added)
+
+agility_hero_keyboard = types.InlineKeyboardMarkup()
+agility_heroes = [
+    "Anti-Mage", "Arc Warden", "Bloodseeker", "Bounty Hunter", "Clinkz",
+    "Drow Ranger", "Ember Spirit", "Faceless Void", "Gyrocopter", "Hoodwink",
+    "Juggernaut", "Luna", "Medusa", "Meepo", "Monkey King",
+    "Morphling", "Naga Siren", "Phantom Assassin", "Phantom Lancer", "Razor",
+    "Riki", "Shadow Fiend", "Slark", "Sniper", "Spectre",
+    "Templar Assassin", "Terrorblade", "Troll Warlord", "Ursa", "Viper", "Weaver"
+]
+buttons_in_row = 2
+buttons_added = []
+for hero in agility_heroes:
+    callback_data = hero.replace(" ", "-").lower()
+    hero_button = types.InlineKeyboardButton(hero, callback_data=callback_data)
+    buttons_added.append(hero_button)
+    if len(buttons_added) == buttons_in_row:
+        agility_hero_keyboard.row(*buttons_added)
+        buttons_added = []
+if buttons_added:
+    agility_hero_keyboard.row(*buttons_added)
+
+intelligence_hero_keyboard = types.InlineKeyboardMarkup()
+intelligence_heroes = [
+    "Ancient Apparition", "Crystal Maiden", "Death Prophet", "Disruptor", "Enchantress",
+    "Grimstroke", "Jakiro", "Keeper of the Light", "Leshrac", "Lich",
+    "Lina", "Lion", "Muerta", "Nature's Prophet", "Necrophos",
+    "Oracle", "Outworld Destroyer", "Puck", "Pugna", "Queen of Pain",
+    "Rubick", "Shadow Demon", "Shadow Shaman", "Silencer", "Skywrath Mage",
+    "Storm Spirit", "Tinker", "Warlock", "Witch Doctor", "Zeus"
+]
+buttons_in_row = 2
+buttons_added = []
+for hero in intelligence_heroes:
+    callback_data = hero.replace(" ", "-").lower()
+    hero_button = types.InlineKeyboardButton(hero, callback_data=callback_data)
+    buttons_added.append(hero_button)
+    if len(buttons_added) == buttons_in_row:
+        intelligence_hero_keyboard.row(*buttons_added)
+        buttons_added = []
+if buttons_added:
+    intelligence_hero_keyboard.row(*buttons_added)
+
+universal_hero_keyboard = types.InlineKeyboardMarkup()
+universal_heroes = [
+    "Abaddon", "Bane", "Batrider", "Beastmaster", "Brewmaster",
+    "Broodmother", "Chen", "Clockwerk", "Dark Seer", "Dark Willow",
+    "Dazzle", "Enigma", "Invoker", "Io", "Lone Druid",
+    "Lycan", "Magnus", "Marci", "Mirana", "Nyx Assassin",
+    "Pangolier", "Phoenix", "Sand King", "Snapfire", "Techies",
+    "Timbersaw", "Vengeful Spirit", "Venomancer", "Visage", "Void Spirit",
+    "Windranger", "Winter Wyvern"
+]
+buttons_in_row = 2
+buttons_added = []
+for hero in universal_heroes:
+    callback_data = hero.replace(" ", "-").lower()
+    hero_button = types.InlineKeyboardButton(hero, callback_data=callback_data)
+    buttons_added.append(hero_button)
+    if len(buttons_added) == buttons_in_row:
+        universal_hero_keyboard.row(*buttons_added)
+        buttons_added = []
+if buttons_added:
+    universal_hero_keyboard.row(*buttons_added)
+
+
+
+# Создаем клавиатуру для выбора действия с героем
+action_keyboard = types.InlineKeyboardMarkup(row_width=2)
+action_keyboard.row(types.InlineKeyboardButton("Процент побед", callback_data="winrate"))
+action_keyboard.row(types.InlineKeyboardButton("Контрпики", callback_data="counters"))
+action_keyboard.row(types.InlineKeyboardButton("Лучшая сборка", callback_data="build"))
+action_keyboard.row(types.InlineKeyboardButton("⬅ Назад ⬅", callback_data="back_hero"))
+
+# Словарь для отслеживания текущего состояния пользователя
+user_data = {}
+
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    user_id = message.chat.id
+    msg = bot.send_message(user_id, "Привет! Выбери категорию:", reply_markup=category_keyboard)
+    user_data[user_id] = {"state": "category", "category_msg_id": msg.message_id}
+
+@bot.callback_query_handler(func=lambda call: call.data == "agility")
+def handle_agility_category_query(call):
+    user_id = call.message.chat.id
+    msg = bot.edit_message_text("Выбрана категория: Ловкость", user_id, user_data[user_id]["category_msg_id"], reply_markup=agility_hero_keyboard)
+    user_data[user_id]["state"] = "agility_hero"
+    user_data[user_id]["agility_hero_msg_id"] = msg.message_id
+    user_data[user_id]["agility_category_msg_id"] = msg.message_id  # Сохраняем сообщение о выборе категории
+
+@bot.callback_query_handler(func=lambda call: call.data in [hero.replace(" ", "-").lower() for hero in agility_heroes])
+def handle_agility_hero_query(call):
+    user_id = call.message.chat.id
+    user_data[user_id]["hero"] = call.data
+    hero = call.data
+    if hero.find("-") > 0:
+        parts = hero.split('-')
+        parts = [part.capitalize() for part in parts]
+        hero = " ".join(parts)
+    else:
+        hero = hero.capitalize()
+    msg = bot.edit_message_text(f"Выбран герой: {hero}", user_id, user_data[user_id]["agility_hero_msg_id"], reply_markup=action_keyboard)
+    user_data[user_id]["state"] = "action"
+    user_data[user_id]["action_msg_id"] = msg.message_id
+
+@bot.callback_query_handler(func=lambda call: call.data == "strength")
+def handle_strength_category_query(call):
+    user_id = call.message.chat.id
+    msg = bot.edit_message_text("Выбрана категория: Сила", user_id, user_data[user_id]["category_msg_id"], reply_markup=strength_hero_keyboard)
+    user_data[user_id]["state"] = "strength_hero"
+    user_data[user_id]["strength_hero_msg_id"] = msg.message_id
+    user_data[user_id]["strength_category_msg_id"] = msg.message_id  # Сохраняем сообщение о выборе категории
+
+@bot.callback_query_handler(func=lambda call: call.data in [hero.replace(" ", "-").lower() for hero in strength_heroes])
+def handle_strength_hero_query(call):
+    user_id = call.message.chat.id
+    user_data[user_id]["hero"] = call.data
+    hero = call.data
+    if hero.find("-") > 0:
+        parts = hero.split('-')
+        parts = [part.capitalize() for part in parts]
+        hero = " ".join(parts)
+    else:
+        hero = hero.capitalize()
+    msg = bot.edit_message_text(f"Выбран герой: {hero}", user_id, user_data[user_id]["strength_hero_msg_id"], reply_markup=action_keyboard)
+    user_data[user_id]["state"] = "action"
+    user_data[user_id]["action_msg_id"] = msg.message_id
+
+@bot.callback_query_handler(func=lambda call: call.data == "intelligence")
+def handle_intelligence_query(call):
+    user_id = call.message.chat.id
+    msg = bot.edit_message_text("Выбрана категория: Интеллект", user_id, user_data[user_id]["category_msg_id"], reply_markup=intelligence_hero_keyboard)
+    user_data[user_id]["state"] = "intelligence_hero"
+    user_data[user_id]["intelligence_hero_msg_id"] = msg.message_id
+    user_data[user_id]["intelligence_category_msg_id"] = msg.message_id  # Сохраняем сообщение о выборе категории
+
+@bot.callback_query_handler(func=lambda call: call.data in [hero.replace(" ", "-").lower() for hero in intelligence_heroes])
+def handle_intelligence_hero_query(call):
+    user_id = call.message.chat.id
+    user_data[user_id]["hero"] = call.data
+    hero = call.data
+    if hero.find("-") > 0:
+        parts = hero.split('-')
+        parts = [part.capitalize() for part in parts]
+        hero = " ".join(parts)
+    else:
+        hero = hero.capitalize()
+    msg = bot.edit_message_text(f"Выбран герой: {hero}", user_id, user_data[user_id]["intelligence_hero_msg_id"], reply_markup=action_keyboard)
+    user_data[user_id]["state"] = "action"
+    user_data[user_id]["action_msg_id"] = msg.message_id
+
+@bot.callback_query_handler(func=lambda call: call.data == "universal")
+def handle_universal_query(call):
+    user_id = call.message.chat.id
+    msg = bot.edit_message_text("Выбрана категория: Универсалы", user_id, user_data[user_id]["category_msg_id"], reply_markup=universal_hero_keyboard)
+    user_data[user_id]["state"] = "universal_hero"
+    user_data[user_id]["universal_hero_msg_id"] = msg.message_id
+    user_data[user_id]["universal_category_msg_id"] = msg.message_id  # Сохраняем сообщение о выборе категории
+
+@bot.callback_query_handler(func=lambda call: call.data in [hero.replace(" ", "-").lower() for hero in universal_heroes])
+def handle_universal_hero_query(call):
+    user_id = call.message.chat.id
+    user_data[user_id]["hero"] = call.data
+    hero = call.data
+    if hero.find("-") > 0:
+        parts = hero.split('-')
+        parts = [part.capitalize() for part in parts]
+        hero = " ".join(parts)
+    else:
+        hero = hero.capitalize()
+    msg = bot.edit_message_text(f"Выбран герой: {hero}", user_id, user_data[user_id]["universal_hero_msg_id"], reply_markup=action_keyboard)
+    user_data[user_id]["state"] = "action"
+    user_data[user_id]["action_msg_id"] = msg.message_id
+
+@bot.callback_query_handler(func=lambda call: call.data in ["winrate", "counters", "build"])
+def handle_action_query(call):
+    user_id = call.message.chat.id
+    hero = user_data[user_id]["hero"]
+    if call.data == "winrate":
+        bot.send_message(user_id, percent_of_won(hero))
+    elif call.data == "counters":
+        bot.send_message(user_id, counters(hero))
+    elif call.data == "build":
+        bot.send_message(user_id, f"Лучшая сборка для героя {hero}.")
+    user_data[user_id]["state"] = "action"
+
+@bot.callback_query_handler(func=lambda call: call.data == "back_hero")
+def handle_back_hero_query(call):
+    user_id = call.message.chat.id
+    user_data[user_id]["state"] = "category"
+    msg = bot.edit_message_text("Выберите категорию:", user_id, user_data[user_id]["category_msg_id"], reply_markup=category_keyboard)
+
+if __name__ == "__main__":
+    bot.polling(none_stop=True)
