@@ -70,3 +70,31 @@ def counters(hero):
     result = f"Герои, которые хорошо играют против {hero}:\n\n"
     result += "\n".join(bad_heroes)
     return result
+
+def aspects(hero):
+    result = ''
+    url = f"https://ru.dotabuff.com/heroes/{hero}"
+    req = requests.get(url, headers=headers)
+    src = req.text
+    soup = bs(src, "lxml")
+    aspects = []
+    # Находим все строки таблицы с классом tw-border-b (это класс каждой строки с данными)
+    for row in soup.select('tr.tw-border-b'):
+        img_tag = row.find('img')
+        if img_tag:
+            aspect_name = img_tag.get('alt', 'Aspect Name N/A')  # Название аспекта
+        else:
+            aspect_name = 'Aspect Name N/A'
+
+        span_tags = row.find_all('span')
+        if len(span_tags) >= 2:
+            presence = span_tags[0].text.strip()  # Присутствие
+            win_percentage = span_tags[1].text.strip()  # Процент побед
+        else:
+            presence = 'Presence N/A'
+            win_percentage = 'Win Percentage N/A'
+
+        # Форматируем вывод только для строк, где данные были успешно извлечены
+        if aspect_name != 'Aspect Name N/A':
+            result += f"Аспект: {aspect_name}\nПроцент выбора: {presence}\nВинрейт с аспектом: {win_percentage}\n\n"
+    return result
